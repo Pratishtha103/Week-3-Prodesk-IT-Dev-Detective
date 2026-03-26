@@ -1,2 +1,2 @@
 Dev Detective: Github User Search App
-!WebsiteScreenshot([screenshot.png])
+![WebsiteScreenshot](screenshot.png)
