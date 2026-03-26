@@ -82,11 +82,13 @@
     <div id="profile-card">
         <div id="loading" hidden class="spinner"></div>
         <p id="error-message"></p>
-        <img  src="blankprofile.png" alt="avatar image" id="avatar-image"  hidden>
+        <img  src="" alt="avatar image" id="avatar-image"  hidden>
         <h2 id="name"></h2>
         <p id="bio"></p>
         <h3 id="joining-date"></h3>
         <a id="profile-url"></a>
+    </div>
+    <div id = "repos">
     </div>
     <script>
         function usernameSearch(event){
@@ -100,6 +102,7 @@
             const bio = document.getElementById('bio');
             const joiningDate = document.getElementById('joining-date');
             const profileUrl = document.getElementById('profile-url');
+            const reposContainer = document.getElementById('repos');
             //console.log('ok');
             //console.log(username);
             const url =  "https://api.github.com/users/";
@@ -134,10 +137,52 @@
                 avatarImage.hidden = false;
                 name.innerText = data.name;
                 bio.innerText = data.bio;
-                joiningDate.innerText = data.created_at;
+                
+                const formattedDate = new Date(data.created_at).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                });
+                joiningDate.innerText = `Joined: ${formattedDate}`;
+
                 profileUrl.href = data.html_url;
                 profileUrl.innerText = "View on Github";
                 profileUrl.target = '_blank';
+
+                const reposUrl = data.repos_url;
+                fetch(`${reposUrl}`)
+                .then(res=>res.json())
+                .then(data=>{
+                    reposContainer.innerHTML = "";
+                    
+                    if (data.length === 0) {
+                        const msg = document.createElement('p');
+                        msg.innerText = "No repositories found";
+                        reposContainer.appendChild(msg);
+                        return;
+                    }
+                    const latestRepos = data
+                        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                        .slice(0, 5);
+                    
+                    const heading = document.createElement('h3');
+                    heading.innerText = "Top 5 Latest Repositories";
+                    reposContainer.appendChild(heading);
+
+                    latestRepos.forEach(repo => {
+                        const link = document.createElement('a');
+                        
+                        link.href = repo.html_url;
+                        link.innerText = repo.name;
+                        link.target = "_blank";
+
+                        link.style.display = "block";
+                        link.style.margin = "5px 0";
+
+                        reposContainer.appendChild(link);
+                    });
+                });
+                
             })
             .catch(error=> console.log(error))
             .finally(() => {

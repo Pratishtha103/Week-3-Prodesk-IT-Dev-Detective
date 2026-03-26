@@ -185,3 +185,11 @@ fetch(`${url}${username}`)
             });
         }
     </script>"
+
+"what am i doing wrong here VM133:1 Uncaught (in promise) SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON"
+
+"when i search for top 5 latest repository for a new user, after searching for one user, the previous repository are still visible"
+
+"I want to add above the links top 5 latest repositories text when it appears"
+
+"what if a user does not have any repositories"
