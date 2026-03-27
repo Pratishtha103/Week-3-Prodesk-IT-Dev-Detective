@@ -123,6 +123,7 @@
             profileUrl.href = "";
             profileUrl.innerText = "";
             profileUrl.target = "";
+            reposContainer.innerHTML = "";
             fetch(`${url}${username}`)
             .then(res=>{
                 if (res.status ===404){
@@ -133,6 +134,7 @@
                     bio.innerText = "";
                     joiningDate.innerText = "";
                     profileUrl.innerText = "";
+                    reposContainer.innerHTML = "";
 
                     throw new Error('User Not Found');
                 }
