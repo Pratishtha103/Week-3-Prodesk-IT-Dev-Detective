@@ -193,3 +193,5 @@ fetch(`${url}${username}`)
 "I want to add above the links top 5 latest repositories text when it appears"
 
 "what if a user does not have any repositories"
+
+"how to call a url using fetch twice (simultaneously)"

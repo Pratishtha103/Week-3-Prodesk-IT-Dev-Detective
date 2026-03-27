@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle-Mode</title>
+
+    <style>
+        body {
+            font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+        }
+
+        button {
+            height: 34px;
+            border: 2px solid #444; 
+            border-radius: 6px;
+            background-color: #e5e5e5;
+            color: #565656;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #565656;
+            color: #e5e5e5;
+        }
+
+        .battle-mode-toggle {
+            float: right;
+        }
+
+        #battle-mode {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        input {
+            width: 210px;
+            height: 34px;
+            border: 2px solid #444;
+            border-radius: 6px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            align-items: center;
+        }
+
+        .profile-card {
+            border: 2px solid #444;
+            padding: 20px;
+            width: 200px;
+            text-align: center;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .winner {
+            border: 3px solid green;
+        }
+
+        .loser {
+            border: 3px solid red;
+        }
+
+        #error-message {
+            color: red;
+            margin-top: 10px;
+        }
+
+        #loading {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="level3.html">
+        <button class="battle-mode-toggle">Dev-Detective</button>
+    </a>
+    <div id="battle-mode">
+        <h1>Battle-Mode</h1>
+        <form onsubmit="battleMode(event)">
+            <div>
+                <input type="search" id="username-one" placeholder="First Username">
+                <input type="search" id="username-two" placeholder="Second Username"> 
+            </div>
+            <button type="submit">Begin</button>
+        </form>
+
+        <p id="loading" hidden>Loading...</p>
+        <p id="error-message"></p>
+
+        <div id="results" style="display: flex; gap: 20px; margin-top: 20px;">
+            
+            <div class="profile-card" id="card-one">
+                <img id="avatar-one" hidden width="80">
+                <h2 id="name-one"></h2>
+                <p id="followers-one"></p>
+                <a id="url-one"></a>
+            </div>
+
+            <div class="profile-card" id="card-two">
+                <img id="avatar-two" hidden width="80">
+                <h2 id="name-two"></h2>
+                <p id="followers-two"></p>
+                <a id="url-two"></a>
+            </div>
+
+        </div>
+    </div>
+    <script>
+        const baseURL = "https://api.github.com/users/";
+
+        function fetchUser(username) {
+            return fetch(baseURL + username)
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`User "${username}" not found`);
+                    }
+                    return res.json();
+                });
+        }
+
+        function battleMode(event) {
+            event.preventDefault();
+
+            const user1 = document.getElementById('username-one').value.trim();
+            const user2 = document.getElementById('username-two').value.trim();
+
+            const errorMessage = document.getElementById("error-message");
+            const loading = document.getElementById("loading");
+
+            errorMessage.innerText = "";
+            loading.hidden = false;
+            resetCards();
+
+            if (!user1 || !user2) {
+                loading.hidden = true;
+                errorMessage.innerText = "Please enter both usernames";
+                return;
+            }
+
+            Promise.all([
+                fetchUser(user1),
+                fetchUser(user2)
+            ])
+            .then(([data1, data2]) => {
+
+                updateUserUI(data1, "one");
+                updateUserUI(data2, "two");
+
+                decideWinner(data1, data2);
+            })
+            .catch(err => {
+                errorMessage.innerText = err.message;
+            })
+            .finally(() => {
+                loading.hidden = true;
+            });
+        }
+
+        function updateUserUI(data, suffix) {
+            const card = document.getElementById(`card-${suffix}`);
+            card.style.display = "block";
+
+            document.getElementById(`avatar-${suffix}`).src = data.avatar_url;
+            document.getElementById(`avatar-${suffix}`).hidden = false;
+
+            document.getElementById(`name-${suffix}`).innerText = data.name;
+            document.getElementById(`followers-${suffix}`).innerText = `Followers: ${data.followers}`;
+
+            const link = document.getElementById(`url-${suffix}`);
+            link.href = data.html_url;
+            link.innerText = "View Profile";
+            link.target = "_blank";
+        }
+
+        function decideWinner(user1, user2) {
+            const card1 = document.getElementById("card-one");
+            const card2 = document.getElementById("card-two");
+
+            card1.classList.remove("winner", "loser");
+            card2.classList.remove("winner", "loser");
+
+            if (user1.followers > user2.followers) {
+                card1.classList.add("winner");
+                card2.classList.add("loser");
+            } else if (user2.followers > user1.followers) {
+                card2.classList.add("winner");
+                card1.classList.add("loser");
+            }
+        }
+
+        function resetCards() {
+            ["one", "two"].forEach(suffix => {
+                const card = document.getElementById(`card-${suffix}`);
+                card.style.display = "none";
+
+                document.getElementById(`avatar-${suffix}`).hidden = true;
+                document.getElementById(`name-${suffix}`).innerText = "";
+                document.getElementById(`followers-${suffix}`).innerText = "";
+                document.getElementById(`url-${suffix}`).innerText = "";
+            });
+
+            document.getElementById("card-one").classList.remove("winner", "loser");
+            document.getElementById("card-two").classList.remove("winner", "loser");
+        }
+    </script>
+</body>
+</html>
