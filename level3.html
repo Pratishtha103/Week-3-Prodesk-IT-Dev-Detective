@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev-Detective</title>
+    <style>
+        body{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif
+        }
+        input{
+            width: 172px;
+            height: 34px;
+            border: 2px solid #444;
+            border-radius: 6px;
+        }
+        button{
+            width: 70px;
+            height: 34px;
+            border: 2px solid #444; 
+            border-radius: 6px;
+            background-color: #e5e5e5;
+            color: #565656;
+            font-weight:bold;
+        }
+        button:hover{
+            background-color: #565656;
+            color: #e5e5e5;
+        }
+        #error-message{
+            color: #b90101;
+        }
+        #profile-card{
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+            border: 2px solid #444;
+            /* height: 400px; */
+            padding: 2px;
+            width: 400px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-align: center;
+        }
+        #avatar-image{
+            width: 100px;
+            border-radius: 50%;
+            overflow: hidden;
+            border:2px solid black;
+        }
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 4px solid #ccc;
+            border-top: 4px solid black;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Dev Detective</h1>
+    <form>
+    <label for="username"></label>
+    <input type="search" id="username"  placeholder="Enter a Github Username" name="username" autocomplete="username"> 
+    <button type="submit" onclick=usernameSearch(event);>Search</button>
+    </form>
+    <div id="profile-card">
+        <div id="loading" hidden class="spinner"></div>
+        <p id="error-message"></p>
+        <img  src="" alt="avatar image" id="avatar-image"  hidden>
+        <h2 id="name"></h2>
+        <p id="bio"></p>
+        <h3 id="joining-date"></h3>
+        <a id="profile-url"></a>
+    </div>
+    <div id = "repos">
+    </div>
+    <script>
+        function usernameSearch(event){
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('error-message');
+            const profileCard = document.getElementById('profile-card');
+            const avatarImage = document.getElementById('avatar-image');
+            const name = document.getElementById('name');
+            const bio = document.getElementById('bio');
+            const joiningDate = document.getElementById('joining-date');
+            const profileUrl = document.getElementById('profile-url');
+            const reposContainer = document.getElementById('repos');
+            //console.log('ok');
+            //console.log(username);
+            const url =  "https://api.github.com/users/";
+            loading.hidden = false;
+            errorMessage.innerText = "";
+            avatarImage.src = "";
+            avatarImage.hidden = true;
+            name.innerText = "";
+            bio.innerText = "";
+            joiningDate.innerText = "";
+            profileUrl.href = "";
+            profileUrl.innerText = "";
+            profileUrl.target = "";
+            fetch(`${url}${username}`)
+            .then(res=>{
+                if (res.status ===404){
+                    profileCard.style.display = "flex";
+                    errorMessage.innerText = "User Not Found";
+                    avatarImage.hidden = true;
+                    name.innerText = "";
+                    bio.innerText = "";
+                    joiningDate.innerText = "";
+                    profileUrl.innerText = "";
+
+                    throw new Error('User Not Found');
+                }
+                return res.json();
+            })
+            .then(data=>{
+                profileCard.style.display = "flex";
+                avatarImage.src = data.avatar_url;
+                avatarImage.hidden = false;
+                name.innerText = data.name;
+                bio.innerText = data.bio;
+                
+                const formattedDate = new Date(data.created_at).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                });
+                joiningDate.innerText = `Joined: ${formattedDate}`;
+
+                profileUrl.href = data.html_url;
+                profileUrl.innerText = "View on Github";
+                profileUrl.target = '_blank';
+
+                const reposUrl = data.repos_url;
+                fetch(`${reposUrl}`)
+                .then(res=>res.json())
+                .then(data=>{
+                    reposContainer.innerHTML = "";
+                    
+                    if (data.length === 0) {
+                        const msg = document.createElement('p');
+                        msg.innerText = "No repositories found";
+                        reposContainer.appendChild(msg);
+                        return;
+                    }
+                    const latestRepos = data
+                        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                        .slice(0, 5);
+                    
+                    const heading = document.createElement('h3');
+                    heading.innerText = "Top 5 Latest Repositories";
+                    reposContainer.appendChild(heading);
+
+                    latestRepos.forEach(repo => {
+                        const link = document.createElement('a');
+                        
+                        link.href = repo.html_url;
+                        link.innerText = repo.name;
+                        link.target = "_blank";
+
+                        link.style.display = "block";
+                        link.style.margin = "5px 0";
+
+                        reposContainer.appendChild(link);
+                    });
+                });
+                
+            })
+            .catch(error=> console.log(error))
+            .finally(() => {
+                loading.hidden = true;
+            });
+        }
+    </script>
+</body>
+</html>
